@@ -22,7 +22,7 @@ val result: Seq[Int] = Parallelizer.run(source, 100){ i =>
 }
 ```
 
-You can use Iterator instead of Seq as a source. This version is useful to handle a very large data.
+You can use `Iterator` instead of `Seq` as a source. This version is useful to handle a very large data.
 
 ```scala
 val source: Iterator[Int] = ...
