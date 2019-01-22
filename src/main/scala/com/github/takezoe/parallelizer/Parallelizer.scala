@@ -7,29 +7,30 @@ import scala.collection.JavaConverters._
  * Provides tiny utilities for parallelization.
  *
  * For example, each element of source is proceeded in parallel in the following example.
- * <pre>
+ *
+ * {{{
  * val source: Seq[Int] = Seq(1, 2, 3)
  * val result: Seq[Int] = Parallelizer.run(source){ i =>
- *   i * 2
+ *   ...
  * }
- * </pre>
+ * }}}
  *
  * Parallelism can be specified as a second parameter. The default value is a number of available processors.
  *
- * <pre>
+ * {{{
  * val result: Seq[Int] = Parallelizer.run(source, 100){ i =>
- *   i * 2
+ *   ...
  * }
- * </pre>
+ * }}}
  *
- * You can use Iterator instead of Seq as a source. This version is useful to handle a very large data.
+ * You can use `Iterator` instead of `Seq` as a source. This version is useful to handle a very large data.
  *
- * <pre>
+ * {{{
  * val source: Iterator[Int] = ...
  * val result: Iterator[Int] = Parallelizer.iterate(source){ i =>
- *   i * 2
+ *   ...
  * }
- * </pre>
+ * }}}
  */
 object Parallelizer {
 
