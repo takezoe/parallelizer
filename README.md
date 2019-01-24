@@ -1,7 +1,7 @@
 parallelizer
 ====
 
-Provides tiny utilities for parallelization.
+A library offering tiny utilities for parallelization.
 
 For example, each element of source is proceeded in parallel in the following example.
 
