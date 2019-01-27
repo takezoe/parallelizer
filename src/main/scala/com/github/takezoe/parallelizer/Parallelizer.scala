@@ -1,7 +1,9 @@
 package com.github.takezoe.parallelizer
 
 import java.util.concurrent.{Executors, LinkedBlockingQueue}
+
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 /**
  * Provides tiny utilities for parallelization.
@@ -34,16 +36,16 @@ import scala.collection.JavaConverters._
  */
 object Parallelizer {
 
-  private class ResultIterator[R](queue: LinkedBlockingQueue[Option[R]]) extends Iterator[R] {
+  private class ResultIterator[R](queue: LinkedBlockingQueue[Option[Try[R]]]) extends Iterator[Try[R]] {
 
-    private var nextMessage: Option[R] = None
+    private var nextMessage: Option[Try[R]] = None
 
     override def hasNext: Boolean = {
       nextMessage = queue.take()
       nextMessage.isDefined
     }
 
-    override def next(): R = {
+    override def next(): Try[R] = {
       nextMessage.get
     }
   }
@@ -56,19 +58,19 @@ object Parallelizer {
    * @param f Function which process each element of the source collection
    * @return Collection of results
    */
-  def run[T, R](source: Seq[T], parallelism: Int = Runtime.getRuntime.availableProcessors())(f: T => R): Seq[R] = {
-    val requestQueue = new LinkedBlockingQueue[Worker[T, R]](parallelism)
-    val resultQueue = new LinkedBlockingQueue[Option[R]]()
+  def run[T, R](source: Seq[T], parallelism: Int = Runtime.getRuntime.availableProcessors())(f: T => R): Seq[Try[R]] = {
+    val requestQueue = new LinkedBlockingQueue[WithIndexWorker[T, R]](parallelism)
+    val resultQueue = new LinkedBlockingQueue[Option[(Try[R], Int)]]()
 
     Range(0, parallelism).foreach { _ =>
-      val worker = new Worker[T, R](requestQueue, resultQueue, f)
+      val worker = new WithIndexWorker[T, R](requestQueue, resultQueue, f)
       requestQueue.put(worker)
     }
 
     val executor = Executors.newFixedThreadPool(parallelism)
 
     // Process all elements of source
-    val it = source.toIterator
+    val it = source.zipWithIndex.toIterator
     while(it.hasNext) {
       val worker = requestQueue.take()
       worker.message.set(it.next())
@@ -84,7 +86,7 @@ object Parallelizer {
     executor.shutdown()
     requestQueue.clear()
 
-    resultQueue.asScala.flatten.toList
+    resultQueue.asScala.flatten.toList.sortBy(_._2).map(_._1)
   }
 
   /**
@@ -96,9 +98,9 @@ object Parallelizer {
    * @param f Function which process each element of the source collection
    * @return Iterator of results
    */
-  def iterate[T, R](source: Iterator[T], parallelism: Int = Runtime.getRuntime.availableProcessors())(f: T => R): Iterator[R] = {
+  def iterate[T, R](source: Iterator[T], parallelism: Int = Runtime.getRuntime.availableProcessors())(f: T => R): Iterator[Try[R]] = {
     val requestQueue = new LinkedBlockingQueue[Worker[T, R]](parallelism)
-    val resultQueue = new LinkedBlockingQueue[Option[R]]()
+    val resultQueue = new LinkedBlockingQueue[Option[Try[R]]]()
 
     Range(0, parallelism).foreach { _ =>
       val worker = new Worker[T, R](requestQueue, resultQueue, f)
