@@ -24,11 +24,13 @@ result.foreach { r =>
 }
 ```
 
-Parallelism can be specified as a second parameter. The default value is a number of available processors.
+Parallelism and timeout can be specified as a second parameter. The default parallelism is a number of available processors. The default timeout is `Duration.Inf`.
 
 ```scala
 // Run with 100 threads. Result order is preserved.
-val result: Seq[Try[Int]] = Parallelizer.run(source, 100){ i: Int =>
+val result: Seq[Try[Int]] = Parallelizer.run(source, 
+  parallelism = 100, 
+  timeout = 30 seconds){ i: Int =>
   ...
 }
 ```

@@ -1,8 +1,9 @@
 package com.github.takezoe.parallelizer
 
-import java.util.concurrent.{Executors, LinkedBlockingQueue}
+import java.util.{Timer, TimerTask}
+import java.util.concurrent.{ExecutorService, Executors, LinkedBlockingQueue, TimeoutException}
 
-import scala.collection.JavaConverters._
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 /**
@@ -50,6 +51,13 @@ object Parallelizer {
     }
   }
 
+  private class TimeoutTimerTask(thread: Thread, executor: ExecutorService) extends TimerTask {
+    override def run(): Unit = {
+      executor.shutdownNow()
+      thread.interrupt()
+    }
+  }
+
   /**
    * Process all elements of the source by the given function then wait for completion.
    *
@@ -58,7 +66,10 @@ object Parallelizer {
    * @param f Function which process each element of the source collection
    * @return Collection of results
    */
-  def run[T, R](source: Seq[T], parallelism: Int = Runtime.getRuntime.availableProcessors())(f: T => R): Seq[Try[R]] = {
+  def run[T, R](source: Seq[T],
+    parallelism: Int = Runtime.getRuntime.availableProcessors(),
+    timeout: Duration = Duration.Inf
+  )(f: T => R): Seq[Try[R]] = {
     val requestQueue = new LinkedBlockingQueue[WithIndexWorker[T, R]](parallelism)
     val resultArray = new Array[Try[R]](source.length)
 
@@ -69,24 +80,34 @@ object Parallelizer {
 
     val executor = Executors.newFixedThreadPool(parallelism)
 
-    // Process all elements of source
-    val it = source.zipWithIndex.toIterator
-    while(it.hasNext) {
-      val worker = requestQueue.take()
-      worker.message.set(it.next())
-      executor.execute(worker)
+    if(timeout != Duration.Inf){
+      new Timer().schedule(new TimeoutTimerTask(Thread.currentThread(), executor), timeout.toMillis)
     }
 
-    // Wait for completion
-    while(requestQueue.size() != parallelism){
-      Thread.sleep(10)
+    try {
+      // Process all elements of source
+      val it = source.zipWithIndex.toIterator
+      while(it.hasNext) {
+        val worker = requestQueue.take()
+        worker.message.set(it.next())
+        executor.execute(worker)
+      }
+
+      // Wait for completion
+      while(requestQueue.size() != parallelism){
+        Thread.sleep(10)
+      }
+
+      resultArray.toSeq
+
+    } catch {
+      case _: InterruptedException => throw new TimeoutException()
+
+    } finally {
+      // Cleanup
+      executor.shutdown()
+      requestQueue.clear()
     }
-
-    // Clean up
-    executor.shutdown()
-    requestQueue.clear()
-
-    resultArray.toSeq
   }
 
   /**
@@ -98,7 +119,10 @@ object Parallelizer {
    * @param f Function which process each element of the source collection
    * @return Iterator of results
    */
-  def iterate[T, R](source: Iterator[T], parallelism: Int = Runtime.getRuntime.availableProcessors())(f: T => R): Iterator[Try[R]] = {
+  def iterate[T, R](source: Iterator[T],
+    parallelism: Int = Runtime.getRuntime.availableProcessors(),
+    timeout: Duration
+  )(f: T => R): Iterator[Try[R]] = {
     val requestQueue = new LinkedBlockingQueue[Worker[T, R]](parallelism)
     val resultQueue = new LinkedBlockingQueue[Option[Try[R]]]()
 
@@ -111,24 +135,34 @@ object Parallelizer {
       override def run(): Unit = {
         val executor = Executors.newFixedThreadPool(parallelism)
 
-        // Process all elements of source
-        while(source.hasNext) {
-          val worker = requestQueue.take()
-          worker.message.set(source.next())
-          executor.execute(worker)
+        if(timeout != Duration.Inf){
+          new Timer().schedule(new TimeoutTimerTask(Thread.currentThread(), executor), timeout.toMillis)
         }
 
-        // Wait for completion
-        while(requestQueue.size() != parallelism){
-          Thread.sleep(10)
+        try {
+          // Process all elements of source
+          while(source.hasNext) {
+            val worker = requestQueue.take()
+            worker.message.set(source.next())
+            executor.execute(worker)
+          }
+
+          // Wait for completion
+          while(requestQueue.size() != parallelism){
+            Thread.sleep(10)
+          }
+
+        } catch {
+          case _: InterruptedException => throw new TimeoutException()
+
+        } finally {
+          // Terminate
+          resultQueue.put(None)
+
+          // Cleanup
+          executor.shutdown()
+          requestQueue.clear()
         }
-
-        // Terminate
-        resultQueue.put(None)
-
-        // Clean up
-        executor.shutdown()
-        requestQueue.clear()
       }
     }.start()
 
