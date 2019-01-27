@@ -26,7 +26,7 @@ private[parallelizer] class Worker[T, R](
 
 private[parallelizer] class WithIndexWorker[T, R](
   requestQueue: BlockingQueue[WithIndexWorker[T, R]],
-  resultQueue: BlockingQueue[Option[(Try[R], Int)]],
+  resultArray: Array[Try[R]],
   f: T => R) extends Runnable {
 
   val message: AtomicReference[(T, Int)] = new AtomicReference[(T, Int)]()
@@ -37,7 +37,7 @@ private[parallelizer] class WithIndexWorker[T, R](
       val t = Try {
         f(m)
       }
-      resultQueue.put(Some((t, i)))
+      resultArray(i) = t
     } finally {
       requestQueue.put(this)
     }

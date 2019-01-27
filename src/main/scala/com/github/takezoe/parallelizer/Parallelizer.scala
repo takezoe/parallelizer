@@ -60,10 +60,10 @@ object Parallelizer {
    */
   def run[T, R](source: Seq[T], parallelism: Int = Runtime.getRuntime.availableProcessors())(f: T => R): Seq[Try[R]] = {
     val requestQueue = new LinkedBlockingQueue[WithIndexWorker[T, R]](parallelism)
-    val resultQueue = new LinkedBlockingQueue[Option[(Try[R], Int)]]()
+    val resultArray = new Array[Try[R]](source.length)
 
     Range(0, parallelism).foreach { _ =>
-      val worker = new WithIndexWorker[T, R](requestQueue, resultQueue, f)
+      val worker = new WithIndexWorker[T, R](requestQueue, resultArray, f)
       requestQueue.put(worker)
     }
 
@@ -86,7 +86,7 @@ object Parallelizer {
     executor.shutdown()
     requestQueue.clear()
 
-    resultQueue.asScala.flatten.toList.sortBy(_._2).map(_._1)
+    resultArray.toSeq
   }
 
   /**
