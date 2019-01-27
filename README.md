@@ -3,6 +3,15 @@ parallelizer
 
 A library offering tiny utilities for parallelization.
 
+## Installation
+
+```scala
+libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.1"
+```
+
+## Usage
+
+
 For example, each element of source is proceeded in parallel in the following example.
 
 ```scala
