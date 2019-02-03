@@ -121,7 +121,7 @@ object Parallelizer {
    */
   def iterate[T, R](source: Iterator[T],
     parallelism: Int = Runtime.getRuntime.availableProcessors(),
-    timeout: Duration
+    timeout: Duration = Duration.Inf
   )(f: T => R): Iterator[Try[R]] = {
     val requestQueue = new LinkedBlockingQueue[Worker[T, R]](parallelism)
     val resultQueue = new LinkedBlockingQueue[Option[Try[R]]]()
