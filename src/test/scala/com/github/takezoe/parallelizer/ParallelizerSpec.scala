@@ -24,6 +24,25 @@ class ParallelizerSpec extends FunSuite {
     assert(result == List(Success(2), Success(4), Success(6)))
   }
 
+  test("iterate()"){
+    val source = Seq(1, 2, 3)
+    val start = System.currentTimeMillis()
+    val result = Parallelizer.iterate(source.toIterator, parallelism = 2){ i =>
+      Thread.sleep(500 * i)
+      i * 2
+    }
+
+    val duration1 = System.currentTimeMillis() - start
+    assert(duration1 < 500)
+
+    // wait for completion here
+    val list = result.toList
+
+    val duration2 = System.currentTimeMillis() - start
+    assert(duration2 > 1500 && duration2 < 2100)
+    assert(list == List(Success(2), Success(4), Success(6)))
+  }
+
   test("large source with run()"){
     val source = Range(0, 999)
     val start = System.currentTimeMillis()
@@ -54,25 +73,6 @@ class ParallelizerSpec extends FunSuite {
 
     val duration2 = System.currentTimeMillis() - start
     assert(duration2 > 5000 && duration2 < 6000)
-  }
-
-  test("iterate()"){
-    val source = Seq(1, 2, 3)
-    val start = System.currentTimeMillis()
-    val result = Parallelizer.iterate(source.toIterator, parallelism = 2){ i =>
-      Thread.sleep(500 * i)
-      i * 2
-    }
-
-    val duration1 = System.currentTimeMillis() - start
-    assert(duration1 < 500)
-
-    // wait for completion here
-    val list = result.toList
-
-    val duration2 = System.currentTimeMillis() - start
-    assert(duration2 > 1500 && duration2 < 2100)
-    assert(list == List(Success(2), Success(4), Success(6)))
   }
 
   test("failure in run()"){
