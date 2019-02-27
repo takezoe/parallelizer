@@ -7,6 +7,7 @@ import org.scalatest.FunSuite
 import scala.language.postfixOps
 import scala.concurrent.duration._
 import scala.util.{Success, Failure}
+import scala.util.Try
 
 
 class ParallelizerSpec extends FunSuite {
@@ -21,7 +22,7 @@ class ParallelizerSpec extends FunSuite {
     val duration = System.currentTimeMillis() - start
 
     assert(duration > 500 && duration < 1100)
-    assert(result == List(Success(2), Success(4), Success(6)))
+    assert(result == List(2, 4, 6))
   }
 
   test("iterate()"){
@@ -40,7 +41,7 @@ class ParallelizerSpec extends FunSuite {
 
     val duration2 = System.currentTimeMillis() - start
     assert(duration2 > 1500 && duration2 < 2100)
-    assert(list == List(Success(2), Success(4), Success(6)))
+    assert(list == List(2, 4, 6))
   }
 
   test("large source with run()"){
@@ -80,10 +81,12 @@ class ParallelizerSpec extends FunSuite {
     val exception = new RuntimeException("failure")
 
     val result = Parallelizer.run(source, parallelism = 2){ i =>
-      if(i == 2){
-        throw exception
+      Try {
+        if(i == 2){
+          throw exception
+        }
+        i * 2
       }
-      i * 2
     }
 
     assert(result == List(Success(2), Failure(exception), Success(6)))
@@ -94,11 +97,13 @@ class ParallelizerSpec extends FunSuite {
     val exception = new RuntimeException("failure")
 
     val result = Parallelizer.iterate(source.toIterator, parallelism = 2){ i =>
-      Thread.sleep(500 * i)
-      if(i == 2){
-        throw exception
+      Try {
+        Thread.sleep(500 * i)
+        if(i == 2){
+          throw exception
+        }
+        i * 2
       }
-      i * 2
     }
 
     // wait for completion here
@@ -130,6 +135,26 @@ class ParallelizerSpec extends FunSuite {
       i
     }
 
-    assert(result.toList == List(Success(1)))
+    assert(result.toList == List(1))
+  }
+
+  test("repeat()"){
+    val source = Seq(0, 2, 5)
+    val counter = scala.collection.mutable.HashMap[Int, Int]()
+    val cancelable = Parallelizer.repeat(source, interval = 1 second){ e =>
+      counter.update(e, counter.get(e).getOrElse(0) + 1)
+      Thread.sleep(e * 1000)
+    }
+
+    Thread.sleep(4900)
+
+    println("cancelled")
+    cancelable.cancel()
+
+    Thread.sleep(1000)
+
+    assert(counter(0) == 5)
+    assert(counter(2) == 3)
+    assert(counter(5) == 1)
   }
 }

@@ -1,10 +1,11 @@
 package com.github.takezoe.parallelizer
 
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.{Timer, TimerTask}
 import java.util.concurrent.{ExecutorService, Executors, LinkedBlockingQueue, TimeoutException}
 
 import scala.concurrent.duration.Duration
-import scala.util.Try
+import scala.reflect.ClassTag
 
 /**
  * Provides tiny utilities for parallelization.
@@ -37,16 +38,16 @@ import scala.util.Try
  */
 object Parallelizer {
 
-  private class ResultIterator[R](queue: LinkedBlockingQueue[Option[Try[R]]]) extends Iterator[Try[R]] {
+  private class ResultIterator[R](queue: LinkedBlockingQueue[Option[R]]) extends Iterator[R] {
 
-    private var nextMessage: Option[Try[R]] = None
+    private var nextMessage: Option[R] = None
 
     override def hasNext: Boolean = {
       nextMessage = queue.take()
       nextMessage.isDefined
     }
 
-    override def next(): Try[R] = {
+    override def next(): R = {
       nextMessage.get
     }
   }
@@ -66,12 +67,12 @@ object Parallelizer {
    * @param f Function which process each element of the source collection
    * @return Collection of results
    */
-  def run[T, R](source: Seq[T],
+  def run[T, R: ClassTag](source: Seq[T],
     parallelism: Int = Runtime.getRuntime.availableProcessors(),
     timeout: Duration = Duration.Inf
-  )(f: T => R): Seq[Try[R]] = {
+  )(f: T => R): Seq[R] = {
     val requestQueue = new LinkedBlockingQueue[WithIndexWorker[T, R]](parallelism)
-    val resultArray = new Array[Try[R]](source.length)
+    val resultArray = new Array[R](source.length)
 
     Range(0, parallelism).foreach { _ =>
       val worker = new WithIndexWorker[T, R](requestQueue, resultArray, f)
@@ -95,7 +96,11 @@ object Parallelizer {
 
       // Wait for completion
       while(requestQueue.size() != parallelism){
-        Thread.sleep(10)
+        try {
+          Thread.sleep(10)
+        } catch {
+          case _: InterruptedException => ()
+        }
       }
 
       resultArray.toSeq
@@ -122,9 +127,9 @@ object Parallelizer {
   def iterate[T, R](source: Iterator[T],
     parallelism: Int = Runtime.getRuntime.availableProcessors(),
     timeout: Duration = Duration.Inf
-  )(f: T => R): Iterator[Try[R]] = {
+  )(f: T => R): Iterator[R] = {
     val requestQueue = new LinkedBlockingQueue[Worker[T, R]](parallelism)
-    val resultQueue = new LinkedBlockingQueue[Option[Try[R]]]()
+    val resultQueue = new LinkedBlockingQueue[Option[R]]()
 
     Range(0, parallelism).foreach { _ =>
       val worker = new Worker[T, R](requestQueue, resultQueue, f)
@@ -149,7 +154,11 @@ object Parallelizer {
 
           // Wait for completion
           while(requestQueue.size() != parallelism){
-            Thread.sleep(10)
+            try {
+              Thread.sleep(10)
+            } catch {
+              case _: InterruptedException => ()
+            }
           }
 
         } catch {
@@ -167,6 +176,49 @@ object Parallelizer {
     }.start()
 
     new ResultIterator[R](resultQueue)
+  }
+
+  def repeat[T](source: Seq[T], interval: Duration)(f: T => Unit): Cancelable = {
+    val requestQueue = new LinkedBlockingQueue[WithIndexWorker[T, Unit]](source.size)
+    val resultArray = new Array[Unit](source.size)
+    val executor = Executors.newFixedThreadPool(source.size)
+    val cancelable = new Cancelable(executor)
+
+    Range(0, source.size).foreach { _ =>
+      val repeatedFunction = (arg: T) => {
+        while(!cancelable.isCancelled){
+          val start = System.currentTimeMillis()
+          f(arg)
+          val duration = System.currentTimeMillis() - start
+          val wait = math.max(0, interval.toMillis - duration)
+          try {
+            Thread.sleep(wait)
+          } catch {
+            case _: InterruptedException => ()
+          }
+        }
+      }
+
+      val worker = new WithIndexWorker[T, Unit](requestQueue, resultArray, repeatedFunction)
+      requestQueue.put(worker)
+    }
+
+    source.zipWithIndex.foreach { case (e, i) =>
+      val worker = requestQueue.take()
+      worker.message.set(e, i)
+      executor.execute(worker)
+    }
+
+    cancelable
+  }
+
+  class Cancelable(executor: ExecutorService) {
+    private val cancelled = new AtomicBoolean(false)
+    def isCancelled: Boolean = cancelled.get()
+    def cancel(): Unit = {
+      executor.shutdownNow()
+      cancelled.set(true)
+    }
   }
 
 }
