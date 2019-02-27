@@ -51,7 +51,7 @@ result.foreach { r: Int =>
 
 `Parallel` also has a method to a given function with each element of the source repeatedly.
 
-```
+```scala
 val source: Seq[Int] = Seq(1, 2, 3)
 
 // Run each element every 10 seconds
