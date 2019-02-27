@@ -1,7 +1,6 @@
 package com.github.takezoe.parallelizer
 
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.{Timer, TimerTask}
 import java.util.concurrent.{ExecutorService, Executors, LinkedBlockingQueue, TimeoutException}
 
 import scala.concurrent.duration.Duration
@@ -52,12 +51,12 @@ object Parallelizer {
     }
   }
 
-  private class TimeoutTimerTask(thread: Thread, executor: ExecutorService) extends TimerTask {
-    override def run(): Unit = {
-      executor.shutdownNow()
-      thread.interrupt()
-    }
-  }
+//  private class TimeoutTimerTask(thread: Thread, executor: ExecutorService) extends TimerTask {
+//    override def run(): Unit = {
+//      executor.shutdownNow()
+//      thread.interrupt()
+//    }
+//  }
 
   /**
    * Process all elements of the source by the given function then wait for completion.
@@ -81,9 +80,9 @@ object Parallelizer {
 
     val executor = Executors.newFixedThreadPool(parallelism)
 
-    if(timeout != Duration.Inf){
-      new Timer().schedule(new TimeoutTimerTask(Thread.currentThread(), executor), timeout.toMillis)
-    }
+//    if(timeout != Duration.Inf){
+//      new Timer().schedule(new TimeoutTimerTask(Thread.currentThread(), executor), timeout.toMillis)
+//    }
 
     try {
       // Process all elements of source
@@ -140,9 +139,9 @@ object Parallelizer {
       override def run(): Unit = {
         val executor = Executors.newFixedThreadPool(parallelism)
 
-        if(timeout != Duration.Inf){
-          new Timer().schedule(new TimeoutTimerTask(Thread.currentThread(), executor), timeout.toMillis)
-        }
+//        if(timeout != Duration.Inf){
+//          new Timer().schedule(new TimeoutTimerTask(Thread.currentThread(), executor), timeout.toMillis)
+//        }
 
         try {
           // Process all elements of source
