@@ -25,10 +25,42 @@ class ParallelSpec extends FunSuite {
     assert(result == List(2, 4, 6))
   }
 
+  test("Seq.parallelMap()"){
+    val source = Seq(1, 2, 3)
+    val start = System.currentTimeMillis()
+    val result = source.parallelMap(parallelism = 2){ i =>
+      Thread.sleep(500)
+      i * 2
+    }
+    val duration = System.currentTimeMillis() - start
+
+    assert(duration > 500 && duration < 1100)
+    assert(result == List(2, 4, 6))
+  }
+
   test("iterate()"){
     val source = Seq(1, 2, 3)
     val start = System.currentTimeMillis()
     val result = Parallel.iterate(source.toIterator, parallelism = 2){ i =>
+      Thread.sleep(500 * i)
+      i * 2
+    }
+
+    val duration1 = System.currentTimeMillis() - start
+    assert(duration1 < 500)
+
+    // wait for completion here
+    val list = result.toList
+
+    val duration2 = System.currentTimeMillis() - start
+    assert(duration2 > 1500 && duration2 < 2100)
+    assert(list == List(2, 4, 6))
+  }
+
+  test("Iterator.parallelMap()"){
+    val source = Seq(1, 2, 3)
+    val start = System.currentTimeMillis()
+    val result = source.toIterator.parallelMap(parallelism = 2){ i =>
       Thread.sleep(500 * i)
       i * 2
     }
@@ -142,6 +174,26 @@ class ParallelSpec extends FunSuite {
     val source = Seq(0, 2, 5)
     val counter = scala.collection.mutable.HashMap[Int, Int]()
     val cancelable = Parallel.repeat(source, interval = 1 second){ e =>
+      counter.update(e, counter.get(e).getOrElse(0) + 1)
+      Thread.sleep(e * 1000)
+    }
+
+    Thread.sleep(4900)
+
+    println("cancelled")
+    cancelable.cancel()
+
+    Thread.sleep(1000)
+
+    assert(counter(0) == 5)
+    assert(counter(2) == 3)
+    assert(counter(5) == 1)
+  }
+
+  test("Seq.parallelRepeat()"){
+    val source = Seq(0, 2, 5)
+    val counter = scala.collection.mutable.HashMap[Int, Int]()
+    val cancelable = source.parallelRepeat(interval = 1 second){ e =>
       counter.update(e, counter.get(e).getOrElse(0) + 1)
       Thread.sleep(e * 1000)
     }
