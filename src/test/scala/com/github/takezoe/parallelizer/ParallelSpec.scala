@@ -10,12 +10,12 @@ import scala.util.{Success, Failure}
 import scala.util.Try
 
 
-class ParallelizerSpec extends FunSuite {
+class ParallelSpec extends FunSuite {
 
   test("run()"){
     val source = Seq(1, 2, 3)
     val start = System.currentTimeMillis()
-    val result = Parallelizer.run(source, parallelism = 2){ i =>
+    val result = Parallel.run(source, parallelism = 2){ i =>
       Thread.sleep(500)
       i * 2
     }
@@ -28,7 +28,7 @@ class ParallelizerSpec extends FunSuite {
   test("iterate()"){
     val source = Seq(1, 2, 3)
     val start = System.currentTimeMillis()
-    val result = Parallelizer.iterate(source.toIterator, parallelism = 2){ i =>
+    val result = Parallel.iterate(source.toIterator, parallelism = 2){ i =>
       Thread.sleep(500 * i)
       i * 2
     }
@@ -48,7 +48,7 @@ class ParallelizerSpec extends FunSuite {
     val source = Range(0, 999)
     val start = System.currentTimeMillis()
 
-    Parallelizer.run(source, parallelism = 100){ i =>
+    Parallel.run(source, parallelism = 100){ i =>
       Thread.sleep(500)
       i * 2
     }
@@ -61,7 +61,7 @@ class ParallelizerSpec extends FunSuite {
     val source = Range(0, 999)
     val start = System.currentTimeMillis()
 
-    val result = Parallelizer.iterate(source.toIterator, parallelism = 100){ i =>
+    val result = Parallel.iterate(source.toIterator, parallelism = 100){ i =>
       Thread.sleep(500)
       i * 2
     }
@@ -80,7 +80,7 @@ class ParallelizerSpec extends FunSuite {
     val source = Seq(1, 2, 3)
     val exception = new RuntimeException("failure")
 
-    val result = Parallelizer.run(source, parallelism = 2){ i =>
+    val result = Parallel.run(source, parallelism = 2){ i =>
       Try {
         if(i == 2){
           throw exception
@@ -96,7 +96,7 @@ class ParallelizerSpec extends FunSuite {
     val source = Seq(1, 2, 3)
     val exception = new RuntimeException("failure")
 
-    val result = Parallelizer.iterate(source.toIterator, parallelism = 2){ i =>
+    val result = Parallel.iterate(source.toIterator, parallelism = 2){ i =>
       Try {
         Thread.sleep(500 * i)
         if(i == 2){
@@ -117,7 +117,7 @@ class ParallelizerSpec extends FunSuite {
     var count = 0
 
     assertThrows[TimeoutException]{
-      Parallelizer.run(source, parallelism = 1, timeout = 1 second){ i =>
+      Parallel.run(source, parallelism = 1, timeout = 1 second){ i =>
         Thread.sleep(600)
         count = count + 1
         i
@@ -130,7 +130,7 @@ class ParallelizerSpec extends FunSuite {
   test("timeout in iterate()"){
     val source = Seq(1, 2, 3).toIterator
 
-    val result = Parallelizer.iterate(source, parallelism = 1, timeout = 1 second){ i =>
+    val result = Parallel.iterate(source, parallelism = 1, timeout = 1 second){ i =>
       Thread.sleep(600)
       i
     }
@@ -141,7 +141,7 @@ class ParallelizerSpec extends FunSuite {
   test("repeat()"){
     val source = Seq(0, 2, 5)
     val counter = scala.collection.mutable.HashMap[Int, Int]()
-    val cancelable = Parallelizer.repeat(source, interval = 1 second){ e =>
+    val cancelable = Parallel.repeat(source, interval = 1 second){ e =>
       counter.update(e, counter.get(e).getOrElse(0) + 1)
       Thread.sleep(e * 1000)
     }

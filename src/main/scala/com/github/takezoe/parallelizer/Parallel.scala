@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
  * }
  * }}}
  */
-object Parallelizer {
+object Parallel {
 
   private class ResultIterator[R](queue: LinkedBlockingQueue[Option[R]]) extends Iterator[R] {
 

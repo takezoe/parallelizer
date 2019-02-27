@@ -6,40 +6,29 @@ A library offering tiny utilities for parallelization.
 ## Installation
 
 ```scala
-libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.2"
+libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.3"
 ```
 
 ## Usage
 
-
-For example, each element of source is proceeded in parallel in the following example.
+For example, each element of source can be proceeded in parallel as the following example.
 
 ```scala
-import com.github.takezoe.parallelizer.Parallelizer
+import com.github.takezoe.parallelizer.Parallel
 
 val source: Seq[Int] = Seq(1, 2, 3)
 
 // Run each element in parallel, but this call is blocked. Result order is preserved.
-val result: Seq[Try[Int]] = Parallelizer.run(source){ i: Int =>
+val result: Seq[Int] = Parallel.run(source){ i: Int =>
   ...
-}
-
-// Result type is Try[R] because some elements might fail to process asynchronously.
-result.foreach { r =>
-  r match {
-    case Success(i) => ...
-    case Failure(e) => ...
-  }
 }
 ```
 
-Parallelism and timeout can be specified as a second parameter. The default parallelism is a number of available processors. The default timeout is `Duration.Inf`.
+Parallelism can be specified as a second parameter. The default parallelism is a number of available processors.
 
 ```scala
 // Run with 100 threads. Result order is preserved.
-val result: Seq[Try[Int]] = Parallelizer.run(source, 
-  parallelism = 100, 
-  timeout = 30 seconds){ i: Int =>
+val result: Seq[Int] = Parallel.run(source, parallelism = 100){ i: Int =>
   ...
 }
 ```
@@ -50,15 +39,26 @@ You can use `Iterator` instead of `Seq` as a source. This version is useful to h
 val source: Iterator[Int] = Seq(1, 2, 3).toIterator
 
 // Read from iterator one by one, and this call is not blocked. Result order is not preserved.
-val result: Iterator[Try[Int]] = Parallelizer.iterate(source){ i: Int =>  
+val result: Iterator[Int] = Parallel.iterate(source){ i: Int =>
   ...
 }
 
 // Blocked here until all elements are proceeded. Elements come in order of completion.
-result.foreach { r: Try[Int] =>
-  r match {
-    case Success(i) => ...
-    case Failure(e) => ...
-  }
+result.foreach { r: Int =>
+  ...
 }
+```
+
+`Parallel` also has a method to a given function with each element of the source repeatedly.
+
+```
+val source: Seq[Int] = Seq(1, 2, 3)
+
+// Run each element every 10 seconds
+val cancellable = Parallel.repeat(source, 10 seconds){ i =>
+  ...
+}
+
+// Stop running
+cancellable.cancel()
 ```
