@@ -63,7 +63,7 @@ val cancellable = Parallel.repeat(source, 10 seconds){ i =>
 cancellable.cancel()
 ```
 
-Implicit classes which offers syntax sugar to use these methods easily are also available.
+Implicit classes which offer syntax sugar to use these methods easily are also available.
 
 ```scala
 import com.github.takezoe.parallelizer._
