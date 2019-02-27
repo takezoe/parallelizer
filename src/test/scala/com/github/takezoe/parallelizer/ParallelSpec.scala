@@ -112,31 +112,31 @@ class ParallelSpec extends FunSuite {
     assert(list == List(Success(2), Failure(exception), Success(6)))
   }
 
-  test("timeout in run()"){
-    val source = Seq(1, 2, 3)
-    var count = 0
-
-    assertThrows[TimeoutException]{
-      Parallel.run(source, parallelism = 1, timeout = 1 second){ i =>
-        Thread.sleep(600)
-        count = count + 1
-        i
-      }
-    }
-
-    assert(count == 1)
-  }
-
-  test("timeout in iterate()"){
-    val source = Seq(1, 2, 3).toIterator
-
-    val result = Parallel.iterate(source, parallelism = 1, timeout = 1 second){ i =>
-      Thread.sleep(600)
-      i
-    }
-
-    assert(result.toList == List(1))
-  }
+//  test("timeout in run()"){
+//    val source = Seq(1, 2, 3)
+//    var count = 0
+//
+//    assertThrows[TimeoutException]{
+//      Parallel.run(source, parallelism = 1, timeout = 1 second){ i =>
+//        Thread.sleep(600)
+//        count = count + 1
+//        i
+//      }
+//    }
+//
+//    assert(count == 1)
+//  }
+//
+//  test("timeout in iterate()"){
+//    val source = Seq(1, 2, 3).toIterator
+//
+//    val result = Parallel.iterate(source, parallelism = 1, timeout = 1 second){ i =>
+//      Thread.sleep(600)
+//      i
+//    }
+//
+//    assert(result.toList == List(1))
+//  }
 
   test("repeat()"){
     val source = Seq(0, 2, 5)
