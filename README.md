@@ -62,3 +62,19 @@ val cancellable = Parallel.repeat(source, 10 seconds){ i =>
 // Stop running
 cancellable.cancel()
 ```
+
+Implicit classes which offers syntax sugar to use these methods easily are also available.
+
+```scala
+import com.github.takezoe.parallelizer._
+
+val source: Seq[Int] = Seq(1, 2, 3)
+
+source.parallelMap(parallelism = 2){ i =>
+  ...
+}
+
+source.parallelRepeat(interval = 10 seconds){ i =>
+  ...
+}
+```
