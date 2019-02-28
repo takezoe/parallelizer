@@ -6,7 +6,7 @@ A library offering tiny utilities for parallelization.
 ## Installation
 
 ```scala
-libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.3"
+libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.4"
 ```
 
 ## Usage
