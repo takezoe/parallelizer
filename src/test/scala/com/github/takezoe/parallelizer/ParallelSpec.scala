@@ -173,15 +173,14 @@ class ParallelSpec extends FunSuite {
   test("repeat()"){
     val source = Seq(0, 2, 5)
     val counter = scala.collection.mutable.HashMap[Int, Int]()
-    val cancelable = Parallel.repeat(source, interval = 1 second){ e =>
+    val stoppable = Parallel.repeat(source, interval = 1 second){ e =>
       counter.update(e, counter.get(e).getOrElse(0) + 1)
       Thread.sleep(e * 1000)
     }
 
     Thread.sleep(4900)
 
-    println("cancelled")
-    cancelable.cancel()
+    stoppable.stop()
 
     Thread.sleep(1000)
 
@@ -193,15 +192,14 @@ class ParallelSpec extends FunSuite {
   test("Seq.parallelRepeat()"){
     val source = Seq(0, 2, 5)
     val counter = scala.collection.mutable.HashMap[Int, Int]()
-    val cancelable = source.parallelRepeat(interval = 1 second){ e =>
+    val stoppable = source.parallelRepeat(interval = 1 second){ e =>
       counter.update(e, counter.get(e).getOrElse(0) + 1)
       Thread.sleep(e * 1000)
     }
 
     Thread.sleep(4900)
 
-    println("cancelled")
-    cancelable.cancel()
+    stoppable.stop()
 
     Thread.sleep(1000)
 

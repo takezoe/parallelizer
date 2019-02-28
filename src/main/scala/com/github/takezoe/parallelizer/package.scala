@@ -1,6 +1,6 @@
 package com.github.takezoe
 
-import com.github.takezoe.parallelizer.Parallel.Cancelable
+import com.github.takezoe.parallelizer.Parallel.Stoppable
 
 import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
@@ -12,7 +12,7 @@ package object parallelizer {
       Parallel.run(source, parallelism)(f)
     }
 
-    def parallelRepeat(interval: Duration)(f: T => Unit): Cancelable = {
+    def parallelRepeat(interval: Duration)(f: T => Unit): Stoppable = {
       Parallel.repeat(source, interval)(f)
     }
   }
