@@ -11,7 +11,7 @@ libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.3"
 
 ## Usage
 
-For example, each element of source can be proceeded in parallel as the following example.
+For example, each element of the source collection can be proceeded in parallel as the following example.
 
 ```scala
 import com.github.takezoe.parallelizer.Parallel
@@ -24,7 +24,7 @@ val result: Seq[Int] = Parallel.run(source){ i: Int =>
 }
 ```
 
-Parallelism can be specified as a second parameter. The default parallelism is a number of available processors.
+Parallelism can be specified as a second parameter. The default value is a number of available processors.
 
 ```scala
 // Run with 100 threads. Result order is preserved.
@@ -49,18 +49,18 @@ result.foreach { r: Int =>
 }
 ```
 
-`Parallel` also has a method to run a given function with each element of the source repeatedly.
+`Parallel` also has a method to run a given function with each element of the source collection periodically and repeatedly.
 
 ```scala
 val source: Seq[Int] = Seq(1, 2, 3)
 
 // Run each element every 10 seconds
-val cancellable = Parallel.repeat(source, 10 seconds){ i =>
+val stoppable = Parallel.repeat(source, 10 seconds){ i =>
   ...
 }
 
 // Stop running
-cancellable.cancel()
+stoppable.stop()
 ```
 
 Implicit classes which offer syntax sugar to use these methods easily are also available.

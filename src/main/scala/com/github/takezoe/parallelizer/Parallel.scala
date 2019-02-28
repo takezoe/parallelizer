@@ -9,11 +9,11 @@ import scala.reflect.ClassTag
 /**
  * Provides tiny utilities for parallelization.
  *
- * For example, each element of source is proceeded in parallel in the following example.
+ * For example, each element of the source collection can be proceeded in parallel as the following example.
  *
  * {{{
  * val source: Seq[Int] = Seq(1, 2, 3)
- * val result: Seq[Int] = Parallelizer.run(source){ i =>
+ * val result: Seq[Int] = Parallel.run(source){ i =>
  *   ...
  * }
  * }}}
@@ -21,7 +21,7 @@ import scala.reflect.ClassTag
  * Parallelism can be specified as a second parameter. The default value is a number of available processors.
  *
  * {{{
- * val result: Seq[Int] = Parallelizer.run(source, 100){ i =>
+ * val result: Seq[Int] = Parallel.run(source, 100){ i =>
  *   ...
  * }
  * }}}
@@ -30,9 +30,23 @@ import scala.reflect.ClassTag
  *
  * {{{
  * val source: Iterator[Int] = ...
- * val result: Iterator[Int] = Parallelizer.iterate(source){ i =>
+ * val result: Iterator[Int] = Parallel.iterate(source){ i =>
  *   ...
  * }
+ * }}}
+ *
+ * `Parallel` also has a method to run a given function with each element of the source collection periodically and repeatedly.
+ *
+ * {{{
+ * val source: Seq[Int] = Seq(1, 2, 3)
+ *
+ * // Run each element every 10 seconds
+ * val stoppable = Parallel.repeat(source, 10 seconds){ i =>
+ *   ...
+ * }
+ *
+ * // Stop running
+ * stoppable.stop()
  * }}}
  */
 object Parallel {
@@ -50,13 +64,6 @@ object Parallel {
       nextMessage.get
     }
   }
-
-//  private class TimeoutTimerTask(thread: Thread, executor: ExecutorService) extends TimerTask {
-//    override def run(): Unit = {
-//      executor.shutdownNow()
-//      thread.interrupt()
-//    }
-//  }
 
   /**
    * Process all elements of the source by the given function then wait for completion.
@@ -79,10 +86,6 @@ object Parallel {
     }
 
     val executor = Executors.newFixedThreadPool(parallelism)
-
-//    if(timeout != Duration.Inf){
-//      new Timer().schedule(new TimeoutTimerTask(Thread.currentThread(), executor), timeout.toMillis)
-//    }
 
     try {
       // Process all elements of source
@@ -139,10 +142,6 @@ object Parallel {
       override def run(): Unit = {
         val executor = Executors.newFixedThreadPool(parallelism)
 
-//        if(timeout != Duration.Inf){
-//          new Timer().schedule(new TimeoutTimerTask(Thread.currentThread(), executor), timeout.toMillis)
-//        }
-
         try {
           // Process all elements of source
           while(source.hasNext) {
@@ -177,15 +176,24 @@ object Parallel {
     new ResultIterator[R](resultQueue)
   }
 
-  def repeat[T](source: Seq[T], interval: Duration)(f: T => Unit): Cancelable = {
+  /**
+    * Run the given function with each element of the source periodically and repeatedly.
+    * Execution can be stopped by the returned Stoppable object.
+    *
+    * @param source Source collection
+    * @param interval Interval of execution of an element
+    * @param f Function which process each element of the source collection
+    * @return Object to stop execution
+    */
+  def repeat[T](source: Seq[T], interval: Duration)(f: T => Unit): Stoppable = {
     val requestQueue = new LinkedBlockingQueue[WithIndexWorker[T, Unit]](source.size)
     val resultArray = new Array[Unit](source.size)
     val executor = Executors.newFixedThreadPool(source.size)
-    val cancelable = new Cancelable(executor)
+    val cancelable = new Stoppable(executor)
 
     Range(0, source.size).foreach { _ =>
       val repeatedFunction = (arg: T) => {
-        while(!cancelable.isCancelled){
+        while(!cancelable.isStopped){
           val start = System.currentTimeMillis()
           f(arg)
           val duration = System.currentTimeMillis() - start
@@ -211,10 +219,10 @@ object Parallel {
     cancelable
   }
 
-  class Cancelable(executor: ExecutorService) {
+  class Stoppable(executor: ExecutorService) {
     private val cancelled = new AtomicBoolean(false)
-    def isCancelled: Boolean = cancelled.get()
-    def cancel(): Unit = {
+    def isStopped: Boolean = cancelled.get()
+    def stop(): Unit = {
       executor.shutdownNow()
       cancelled.set(true)
     }

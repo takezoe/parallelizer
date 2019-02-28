@@ -3,8 +3,6 @@ package com.github.takezoe.parallelizer
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.atomic.AtomicReference
 
-import scala.util.Try
-
 private[parallelizer] class Worker[T, R](
   requestQueue: BlockingQueue[Worker[T, R]],
   resultQueue: BlockingQueue[Option[R]],
