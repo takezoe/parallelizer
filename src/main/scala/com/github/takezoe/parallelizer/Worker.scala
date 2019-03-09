@@ -5,22 +5,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 private[parallelizer] class Worker[T, R](
   requestQueue: BlockingQueue[Worker[T, R]],
-  resultQueue: BlockingQueue[Option[R]],
-  f: T => R) extends Runnable {
-
-  val message: AtomicReference[T] = new AtomicReference[T]()
-
-  override def run: Unit = {
-    try {
-      resultQueue.put(Some(f(message.get())))
-    } finally {
-      requestQueue.put(this)
-    }
-  }
-}
-
-private[parallelizer] class WithIndexWorker[T, R](
-  requestQueue: BlockingQueue[WithIndexWorker[T, R]],
   resultArray: Array[R],
   f: T => R) extends Runnable {
 
