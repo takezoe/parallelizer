@@ -6,12 +6,12 @@ A library offering tiny utilities for parallelization.
 ## Installation
 
 ```scala
-libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.4"
+libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.5"
 ```
 
 ## Usage
 
-For example, each element of source can be proceeded in parallel as the following example.
+For example, each element of the source collection can be proceeded in parallel as the following example.
 
 ```scala
 import com.github.takezoe.parallelizer.Parallel
