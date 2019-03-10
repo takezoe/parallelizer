@@ -28,20 +28,6 @@ import scala.reflect.ClassTag
  */
 object Parallel {
 
-  private class ResultIterator[R](queue: LinkedBlockingQueue[Option[R]]) extends Iterator[R] {
-
-    private var nextMessage: Option[R] = None
-
-    override def hasNext: Boolean = {
-      nextMessage = queue.take()
-      nextMessage.isDefined
-    }
-
-    override def next(): R = {
-      nextMessage.get
-    }
-  }
-
   /**
    * Process all elements of the source by the given function then wait for completion.
    *
