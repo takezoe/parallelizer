@@ -52,7 +52,7 @@ object Parallel {
 
     try {
       // Process all elements of source
-      val it = source.zipWithIndex.toIterator
+      val it = source.zipWithIndex.iterator
       while(it.hasNext) {
         val worker = requestQueue.take()
         worker.message.set(it.next())

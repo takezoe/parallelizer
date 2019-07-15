@@ -2,12 +2,14 @@ name := "parallelizer"
 
 organization := "com.github.takezoe"
 
-version := "0.0.5"
+version := "0.0.6-SNAPSHOT"
 
 scalaVersion := "2.12.8"
 
+crossScalaVersions := Seq("2.12.8", "2.13.0")
+
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+  "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 )
 
 publishMavenStyle := true
