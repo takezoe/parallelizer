@@ -6,7 +6,7 @@ A library offering tiny utilities for parallelization.
 ## Installation
 
 ```scala
-libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.5"
+libraryDependencies += "com.github.takezoe" %% "parallelizer" % "0.0.6"
 ```
 
 ## Usage
@@ -29,6 +29,18 @@ Parallelism can be specified as a second parameter. The default parallelism is a
 ```scala
 // Run with 100 threads. Result order is preserved.
 val result: Seq[Int] = Parallel.run(source, parallelism = 100){ i: Int =>
+  ...
+}
+```
+
+Parallel execution can be broken immediately by calling `Parallel.break` in the closure. It waits for the completion is ongoing elements, but drops all elements remaining when it called.
+
+```scala
+// Break parallel execution if terminated flag is true
+val result: Seq[Int] = Parallel.run(source, parallelism = 100){ i: Int =>
+  if (terminated) {
+    Parallel.break
+  }
   ...
 }
 ```

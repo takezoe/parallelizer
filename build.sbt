@@ -2,7 +2,7 @@ name := "parallelizer"
 
 organization := "com.github.takezoe"
 
-version := "0.0.6-SNAPSHOT"
+version := "0.0.6"
 
 scalaVersion := "2.12.11"
 
@@ -14,7 +14,9 @@ libraryDependencies ++= Seq(
 
 publishMavenStyle := true
 publishArtifact in Test := false
-pomIncludeRepository := { _ => false }
+pomIncludeRepository := { _ =>
+  false
+}
 
 publishTo := {
   val nexus = "https://oss.sonatype.org/"
