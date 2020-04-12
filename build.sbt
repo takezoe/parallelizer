@@ -4,9 +4,9 @@ organization := "com.github.takezoe"
 
 version := "0.0.6-SNAPSHOT"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.12.11"
 
-crossScalaVersions := Seq("2.12.8", "2.13.0")
+crossScalaVersions := Seq("2.12.11", "2.13.1")
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
@@ -21,13 +21,13 @@ publishTo := {
   if (version.value.trim.endsWith("SNAPSHOT"))
     Some("snapshots" at nexus + "content/repositories/snapshots")
   else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    Some("releases" at nexus + "service/local/staging/deploy/maven2")
 }
 
 scalacOptions := Seq("-deprecation", "-feature")
 
 pomExtra := (
-<url>https://github.com/takezoe/parallelizer</url>
+  <url>https://github.com/takezoe/parallelizer</url>
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
