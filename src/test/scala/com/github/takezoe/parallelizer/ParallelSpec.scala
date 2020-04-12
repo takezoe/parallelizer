@@ -18,7 +18,7 @@ class ParallelSpec extends FunSuite {
     val duration = System.currentTimeMillis() - start
 
     assert(duration > 500 && duration < 1100)
-    assert(result == List(2, 4, 6))
+    assert(result.sorted == List(2, 4, 6))
   }
 
   test("Seq.parallelMap()") {
