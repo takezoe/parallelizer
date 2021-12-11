@@ -1,4 +1,4 @@
-parallelizer [![Build Status](https://travis-ci.org/takezoe/parallelizer.svg?branch=master)](https://travis-ci.org/takezoe/parallelizer) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.takezoe/parallelizer_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.takezoe/parallelizer_2.12) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/takezoe/parallelizer/blob/master/LICENSE)
+parallelizer [![Scala CI](https://github.com/takezoe/parallelizer/actions/workflows/scala.yml/badge.svg)](https://github.com/takezoe/parallelizer/actions/workflows/scala.yml) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.takezoe/parallelizer_2.12/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.takezoe/parallelizer_2.12) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/takezoe/parallelizer/blob/master/LICENSE)
 ====
 
 A library offering tiny utilities for parallelization.
