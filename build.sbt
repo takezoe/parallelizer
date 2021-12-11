@@ -4,16 +4,16 @@ organization := "com.github.takezoe"
 
 version := "0.0.7-SNAPSHOT"
 
-scalaVersion := "2.12.11"
+scalaVersion := "2.13.7"
 
-crossScalaVersions := Seq("2.12.11", "2.13.1")
+crossScalaVersions := Seq("2.12.15", "2.13.7")
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "3.0.8" % "test"
 )
 
 publishMavenStyle := true
-publishArtifact in Test := false
+Test / publishArtifact := false
 pomIncludeRepository := { _ =>
   false
 }
