@@ -18,6 +18,7 @@ project/plugins/project/
 .idea_modules
 
 # Metals specific
-.metals
-.bloop
-project/metals.sbt
+.metals/
+.bloop/
+.vscode/
+metals.sbt
